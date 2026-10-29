@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="topbar">
+  <div><div class="eyebrow">NEXT-GEN FARMING PLATFORM</div><h1>{{ t.title }}</h1></div>
+  <span class="pill">{{ t.version_tag }}</span>
+</header>
+<nav class="tabs">
+{% for tab_name in t.tabs %}
+  <a class="{% if loop.index0 == tab %}active{% endif %}" href="{{ url_for('index', tab=loop.index0) }}">{{ tab_name }}</a>
+{% endfor %}
+</nav>
+
+{% if tab == 0 %}
+  {% set temp, wind, status, advice, has_alert, alert_msg = weather %}
+  {% if has_alert %}<div class="flash error">{{ alert_msg }}</div>{% endif %}
+  <section class="hero card">
+    <div><div class="eyebrow">COTTONCARE AI • SMART AGRICULTURE</div><h2>{{ t.greeting }}{{ user.name }} 👋</h2><p>{{ t.dash_desc }}</p></div>
+    <a class="btn" href="{{ url_for('index', tab=1) }}">{{ t.scan_btn }}</a>
+  </section>
+  <h2>{{ t.weather_title }}</h2>
+  <div class="grid three">
+    <div class="card metric"><div class="muted">{{ t.temp }}</div><div class="metric-value">{{ temp }} °C</div><div>{{ user.location }}</div></div>
+    <div class="card metric"><div class="muted">{{ t.wind }}</div><div class="metric-value">{{ wind }} km/h</div><div>{{ status }}</div></div>
+    <div class="card"><div class="muted">{{ t.advice }}</div><p>{{ advice }}</p></div>
+  </div>
+
+{% elif tab == 1 %}
+  <h2>{{ t.scan_header }}</h2>
+  <div class="card">
+    <form action="{{ url_for('scan') }}" method="post" enctype="multipart/form-data" class="form-stack">
+      <label>{{ t.upload_label }}</label>
+      <div class="upload-options">
+        <div><label for="crop_image">📁 Upload image</label><input id="crop_image" name="crop_image" type="file" accept="image/*" capture="environment" required></div>
+        <p class="small muted">On a phone, the file picker may offer the camera. On a laptop, choose an image file.</p>
+      </div>
+      <button class="btn" type="submit">{{ t.analyze_btn }}</button>
+    </form>
+  </div>
+  {% if last_report %}
+    <div class="card report-card">
+      <div class="report-head"><h3>📋 Pro Diagnostic Report</h3><button class="btn btn-secondary" onclick="speakText({{ last_report|tojson }}, {{ {'मराठी':'mr-IN','हिंदी':'hi-IN','English':'en-US'}[lang]|tojson }})">🔊 Listen</button></div>
+      <div class="report-text">{{ last_report }}</div>
+    </div>
+  {% endif %}
+
+{% elif tab == 2 %}
+  <h2>{{ t.chatbot_header }}</h2><p class="muted">{{ t.chatbot_desc }}</p>
+  <div class="card">
+    <div class="chat-controls">
+      <label for="voice_language">🎤 Voice language</label>
+      <select id="voice_language">
+        <option>English</option><option>Hindi</option><option>Marathi</option>
+      </select>
+    </div>
+    <div id="chat-messages" class="chat-messages">
+      {% for message in chat %}
+      <div class="chat-bubble {{ message.role }}"><strong>{{ 'You' if message.role == 'user' else 'Cotton AI' }}</strong><div>{{ message.content }}</div>
+        {% if message.role == 'assistant' %}<button class="text-button" onclick='speakText({{ message.content|tojson }}, document.getElementById("voice_language").value === "Marathi" ? "mr-IN" : (document.getElementById("voice_language").value === "Hindi" ? "hi-IN" : "en-US"))'>🔊 Listen</button>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    <form id="chat-form" class="chat-form">
+      <input id="chat-question" name="question" placeholder="{{ t.chat_placeholder }}" autocomplete="off" required>
+      <button class="btn" type="submit">Send</button>
+      <button class="btn btn-secondary" type="button" id="mic-button">🎤 Speak</button>
+    </form>
+    <p id="chat-status" class="small muted"></p>
+    <p class="small muted">Voice input uses browser speech recognition; use Chrome and allow microphone access.</p>
+  </div>
+
+{% elif tab == 3 %}
+  <h2>{{ t.yield_header }}</h2>
+  <div class="card">
+    <form id="yield-form" class="form-stack">
+      <div class="grid two">
+        <div><label>{{ t.acres }}</label><input name="acres" type="number" min="0.5" max="50" step="0.5" value="{{ user.land_acres }}" required></div>
+        <div><label>{{ t.bolls }}</label><input name="bolls" type="number" min="5" max="150" value="35" required></div>
+        <div><label>{{ t.soil }}</label><select name="soil"><option>काळी माती (Black Soil)</option><option>मध्यम भारी माती (Medium Deep Soil)</option><option>तांबडी/हलकी माती (Red/Light Soil)</option></select></div>
+        <div><label>{{ t.water_source }}</label><select name="water"><option>विहीर / बोरवेल (Irrigated)</option><option>ओलिताची सोय / सिंचन (Canal/Pipeline)</option><option>कोरडवाहू / पावसावर अवलंबून (Rainfed)</option></select></div>
+      </div>
+      <button class="btn" type="submit">{{ t.calc_yield }}</button>
+    </form>
+    <div id="yield-result" class="result-box hidden"></div>
+    <p class="small muted">The estimate is a rough heuristic copied from the original code, not a validated crop-yield prediction.</p>
+  </div>
+
+{% elif tab == 4 %}
+  <h2>{{ t.fert_header }}</h2>
+  <div class="card">
+    <form action="{{ url_for('fertilizer') }}" method="post" class="form-stack">
+      <div class="grid two">
+        <div><label>{{ t.crop_days }}</label><input name="crop_days" type="range" min="1" max="160" value="45" oninput="document.getElementById('days-value').textContent=this.value"></div>
+        <div><label>Days: <span id="days-value">45</span></label><label>Land area (acres)</label><input name="acres" type="number" min="0.5" max="50" step="0.5" value="{{ user.land_acres }}" required></div>
+      </div>
+      <p class="notice">💡 Crop needs vary by soil test, variety, weather and local recommendations. Confirm fertilizer quantities with a local agriculture expert.</p>
+      <button class="btn" type="submit">{{ t.calc_fert }}</button>
+    </form>
+    {% if session.get('fert_result') %}
+      {% set r = session.get('fert_result') %}
+      <div class="result-box"><h3>🌱 {{ r.stage }}</h3><div class="grid three"><div><span class="muted">Urea</span><div class="metric-value">{{ r.urea }} kg</div></div><div><span class="muted">DAP</span><div class="metric-value">{{ r.dap }} kg</div></div><div><span class="muted">Irrigation</span><p>{{ r.irrigation }}</p></div></div></div>
+    {% endif %}
+  </div>
+
+{% elif tab == 5 %}
+  <h2>{{ t.market_header }}</h2>
+  <div class="grid three">
+    <div class="card"><h3>🏛️ छत्रपती संभाजीनगर</h3><p><strong>कापूस बाजारभाव:</strong> ₹ 7,150 - ₹ 7,350 / क्विंटल</p><p class="muted">आवक: चांगली | स्थिती: स्थिर</p></div>
+    <div class="card"><h3>🏛️ अकोला</h3><p><strong>कापूस बाजारभाव:</strong> ₹ 7,200 - ₹ 7,420 / क्विंटल</p><p class="muted">आवक: उच्च | स्थिती: तेजीत</p></div>
+    <div class="card"><h3>🏛️ जालना</h3><p><strong>कापूस बाजारभाव:</strong> ₹ 7,100 - ₹ 7,300 / क्विंटल</p><p class="muted">आवक: मध्यम | स्थिती: स्थिर</p></div>
+  </div>
+  <div class="card"><h3>📞 शेतकरी मदत केंद्र व हेल्पलाइन</h3><p><strong>Kisan Call Center:</strong> 1800-180-1551</p><p><strong>कृषी विभाग हेल्पलाइन:</strong> 1800-233-4000</p><p><strong>CottonCare Support:</strong> support@cottoncare.ai</p><p class="small muted">Market rates are static sample values from the original code, not verified live rates.</p></div>
+
+{% elif tab == 6 %}
+  <h2>{{ t.history_header }}</h2>
+  {% if not history %}<div class="card muted">तपासणीचा कोणताही इतिहास उपलब्ध नाही.</div>{% endif %}
+  {% for item in history %}
+    <div class="card history-item"><div class="history-image">{% if item.image_b64 %}<img src="data:image/jpeg;base64,{{ item.image_b64 }}" alt="Crop sample">{% else %}📷{% endif %}</div><div><div class="muted small">🗓️ {{ item.timestamp }}</div><h3>📋 अहवाल</h3><div class="report-text">{{ item.report_text }}</div></div></div>
+  {% endfor %}
+
+{% elif tab == 7 %}
+  <h2>{{ t.profile_header }}</h2>
+  <div class="card">
+    <div class="grid two">
+      <div><h3>👤 {{ user.name }}</h3><p>📱 <strong>ID / Mobile:</strong> {{ user.identifier }}</p><p>📍 <strong>Location:</strong> {{ user.location }}</p><p>🌾 <strong>Registered land:</strong> {{ user.land_acres }} acres</p></div>
+      <form action="{{ url_for('profile') }}" method="post" class="form-stack">
+        <h3>⚙️ Update profile</h3>
+        <label>Farmer name</label><input name="name" value="{{ user.name }}" required>
+        <label>Village / District</label><input name="location" value="{{ user.location }}" required>
+        <label>Total land (acres)</label><input name="land_acres" type="number" min="0.5" max="100" step="0.5" value="{{ user.land_acres }}" required>
+        <button class="btn" type="submit">{{ t.update_profile }}</button>
+      </form>
+    </div>
+  </div>
+{% endif %}
+<footer class="footer">CottonCare AI • Localhost edition • For development use</footer>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="login-wrap">
+  <div class="login-card">
+    <h1>{{ t.login_title }}</h1>
+    <p class="muted">{{ t.login_subtitle }}</p>
+    <form action="{{ url_for('language') }}" method="post" class="login-language">
+      <input type="hidden" name="tab" value="0">
+      <label>🌐 Language / भाषा</label>
+      <select name="language" onchange="this.form.submit()">
+        {% for choice in texts.keys() %}<option value="{{ choice }}" {% if lang == choice %}selected{% endif %}>{{ choice }}</option>{% endfor %}
+      </select>
+    </form>
+    <form action="{{ url_for('send_otp') }}" method="post" class="form-stack">
+      <label>{{ t.input_placeholder }}</label>
+      <input name="identifier" type="text" minlength="4" required placeholder="Mobile number or email">
+      <button class="btn" type="submit">{{ t.send_otp }}</button>
+    </form>
+    <form action="{{ url_for('verify_otp') }}" method="post" class="form-stack otp-form">
+      <label>{{ t.enter_otp }}</label>
+      <input name="otp" inputmode="numeric" maxlength="4" minlength="4" required placeholder="1234">
+      <button class="btn" type="submit">{{ t.verify_otp }}</button>
+    </form>
+    <p class="small muted">Demo login: this local version displays the OTP on screen; it does not send SMS/email.</p>
+  </div>
+</div>
+{% endblock %}

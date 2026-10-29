@@ -1,0 +1,70 @@
+{
+  "model_name": "RandomForestRegressor",
+  "target_variable": "Yield",
+  "dataset_rows": 80000,
+  "train_rows": 64000,
+  "test_rows": 16000,
+  "features": [
+    "Growth_Cycle",
+    "Sunlight_Hours",
+    "Precipitation",
+    "Average_Temperature",
+    "Drought_Days",
+    "Flood_Days",
+    "Soil_Moisture",
+    "Soil_pH",
+    "CO2_Concentration"
+  ],
+  "metrics": {
+    "random_forest": {
+      "mae": 3.34,
+      "rmse": 4.72,
+      "r2_score": 0.9788
+    },
+    "linear_regression_baseline": {
+      "mae": 8.72,
+      "rmse": 10.89,
+      "r2_score": 0.8872
+    }
+  },
+  "feature_importances": [
+    {
+      "feature": "Sunlight_Hours",
+      "importance": 0.5312
+    },
+    {
+      "feature": "Drought_Days",
+      "importance": 0.1948
+    },
+    {
+      "feature": "Flood_Days",
+      "importance": 0.1876
+    },
+    {
+      "feature": "Growth_Cycle",
+      "importance": 0.0463
+    },
+    {
+      "feature": "Precipitation",
+      "importance": 0.0267
+    },
+    {
+      "feature": "CO2_Concentration",
+      "importance": 0.0086
+    },
+    {
+      "feature": "Soil_pH",
+      "importance": 0.0018
+    },
+    {
+      "feature": "Soil_Moisture",
+      "importance": 0.0017
+    },
+    {
+      "feature": "Average_Temperature",
+      "importance": 0.0014
+    }
+  ],
+  "training_date": "2026-10-17 12:37:03 UTC",
+  "provenance": "Trained on 80,000 simulated agricultural benchmark observations from cotton_growth_cycle_data.csv"
+}

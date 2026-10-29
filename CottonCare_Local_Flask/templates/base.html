@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ t.title if t else "CottonCare AI" }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="layout">
+  {% if session.get('logged_in') %}
+  <aside class="sidebar">
+    <div class="brand">🌾 CottonCare AI</div>
+    <div class="version">✨ Version 3.0.0 Pro Max</div>
+    <form action="{{ url_for('language') }}" method="post" class="language-form">
+      <input type="hidden" name="tab" value="{{ tab|default(0) }}">
+      <label for="language">🌐 Select Language / भाषा</label>
+      <select id="language" name="language" onchange="this.form.submit()">
+        {% for choice in texts.keys() %}
+          <option value="{{ choice }}" {% if lang == choice %}selected{% endif %}>{{ choice }}</option>
+        {% endfor %}
+      </select>
+    </form>
+    <div class="sidebar-user">👤 {{ session.get('user_identifier') }}</div>
+    <form action="{{ url_for('logout') }}" method="post">
+      <button class="btn btn-secondary full" type="submit">{{ t.logout }}</button>
+    </form>
+    <div class="sidebar-note">Local Flask edition</div>
+  </aside>
+  {% endif %}
+  <main class="main {% if not session.get('logged_in') %}main-login{% endif %}">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-stack">
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+</div>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
